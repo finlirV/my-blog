@@ -1,0 +1,69 @@
+---
+title: "联合收获机清选装置的三维参数化建模"
+abstract: "使用 SolidWorks 建立清选装置的可参数化三维模型，为后续 DEM 仿真提供几何基础。"
+publishedOn: "2026-05-15T10:00:00+0800"
+isPublished: true
+tags: ["SolidWorks", "仿真", "设计"]
+---
+
+## 建模思路
+
+清选装置的几何结构复杂，包含振动筛、风机、导流板等多个部件。为了便于后续的参数优化和 DEM 仿真导入，我们采用**自顶向下**的装配体建模策略。
+
+## 关键参数
+
+清选装置的核心几何参数包括：
+
+- 筛面倾角：$\alpha = 3° \sim 7°$
+- 振动频率：$f = 4 \sim 6$ Hz
+- 振幅：$A = 20 \sim 40$ mm
+- 筛孔直径：$d = 12 \sim 16$ mm
+
+<ParameterSlider 
+  defaultValue={5} 
+  min={3} 
+  max={7} 
+  step={0.5}
+  label="筛面倾角"
+  unit="°"
+  description="筛面倾角影响籽粒在筛面上的运动轨迹和透筛效率。倾角过大导致籽粒停留时间过短，倾角过小则排杂困难。"
+/>
+
+## 装配体结构
+
+整个清选装置分为以下子装配体：
+
+1. **上筛组件**：承担主要清选功能
+2. **下筛组件**：二次清选和输送
+3. **风机组件**：提供气流场
+4. **机架组件**：支撑和连接
+
+<Callout type="success" title="建模技巧">
+  使用 SolidWorks 的 **方程式驱动** 功能，可以将关键尺寸关联到全局变量。修改一个参数，所有相关特征自动更新。
+</Callout>
+
+## 导出与仿真对接
+
+完成建模后，需要将几何模型导出为 STEP 格式，供 EDEM 进行离散元仿真。
+
+<CodeBlock 
+  code={`# Python 脚本：批量导出 STEP 文件
+import win32com.client
+
+swApp = win32com.client.Dispatch("SldWorks.Application")
+model = swApp.ActiveDoc
+
+# 设置导出选项
+exportOptions = model.Extension.GetSaveAsOptions(0)
+exportOptions.ExportAs3DCurves = True
+
+# 导出路径
+savePath = r"D:\Simulation\cleaning_device.step"
+model.Extension.SaveAs(savePath, 0, exportOptions)`}
+  language="python"
+  filename="export-step.py"
+/>
+
+## 后续工作
+
+下一步将基于该几何模型进行 DEM+CFD 耦合仿真，分析不同工况下的籽粒运动规律和损失机理。

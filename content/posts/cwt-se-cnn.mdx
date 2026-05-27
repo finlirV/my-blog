@@ -1,0 +1,76 @@
+---
+title: "基于 CWT-SE-CNN 的清选损失信号识别"
+abstract: "将连续小波变换与通道注意力机制结合，构建适用于农机振动环境的冲击信号分类模型。"
+publishedOn: "2026-05-10T10:00:00+0800"
+isPublished: true
+tags: ["深度学习", "信号处理", "农业工程"]
+---
+
+## 问题背景
+
+大豆联合收获机在田间作业时，清选室内的籽粒冲击、秸秆碰撞、机械振动等多种声源混杂在一起。传统的阈值检测方法难以区分真实的籽粒冲击与干扰信号。
+
+## 模型架构
+
+我们提出的 CWT-SE-CNN 模型包含三个核心模块：
+
+### 1. 时频特征提取（CWT）
+
+连续小波变换将一维时域信号映射到二维时频空间：
+
+```
+W(a, b) = (1/√a) ∫ x(t) ψ*((t-b)/a) dt
+```
+
+其中 $a$ 为尺度因子，$b$ 为平移因子，$ψ$ 为 Morlet 母小波。
+
+<Callout type="info" title="小波选择">
+  Morlet 小波在时频局部化方面表现均衡，适合分析具有瞬态冲击特征的信号。
+</Callout>
+
+### 2. 通道注意力（SE Block）
+
+Squeeze-and-Excitation 模块自适应地调整各通道特征的权重：
+
+<CodeBlock 
+  code={`class SEBlock(nn.Module):
+    def __init__(self, channels, reduction=16):
+        super().__init__()
+        self.squeeze = nn.AdaptiveAvgPool2d(1)
+        self.excitation = nn.Sequential(
+            nn.Linear(channels, channels // reduction, bias=False),
+            nn.ReLU(inplace=True),
+            nn.Linear(channels // reduction, channels, bias=False),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        y = self.squeeze(x).view(b, c)
+        y = self.excitation(y).view(b, c, 1, 1)
+        return x * y.expand_as(x)`}
+  language="python"
+  filename="se-block.py"
+/>
+
+### 3. 分类网络（CNN）
+
+采用轻量化的 CNN 结构，在保证精度的同时满足机载系统的实时性要求。
+
+## 实验结果
+
+在台架试验数据集上的识别结果：
+
+| 模型 | 准确率 | 召回率 | F1 分数 | 参数量 |
+|------|--------|--------|---------|--------|
+| 传统 CNN | 87.3% | 84.1% | 0.857 | 1.2M |
+| CWT-CNN | 91.5% | 89.2% | 0.903 | 1.5M |
+| **CWT-SE-CNN** | **94.8%** | **93.1%** | **0.939** | **1.6M** |
+
+<Callout type="success" title="关键发现">
+  SE 注意力机制使模型对关键频带的敏感度提升，有效抑制了机械振动频段的干扰。
+</Callout>
+
+## 部署方案
+
+模型通过 TensorFlow Lite 量化后部署到机载 ARM 处理器上，单帧推理时间约 **12ms**，满足实时性要求。

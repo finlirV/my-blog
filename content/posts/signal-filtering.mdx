@@ -1,0 +1,109 @@
+---
+title: "大豆清选损失信号的滤波算法对比"
+abstract: "对比 LMS、卡尔曼滤波与小波阈值去噪在压电传感器信号处理中的表现，探索最适合农机振动环境的去噪方案。"
+publishedOn: "2026-05-20T10:00:00+0800"
+isPublished: true
+tags: ["信号处理", "农业工程", "深度学习"]
+coverImage: "/images/signal-cover.png"
+---
+
+## 引言
+
+在大豆联合收获机的清选过程中，压电传感器采集到的籽粒冲击信号往往伴随着强烈的机械振动噪声。如何有效地从混杂信号中提取出纯净的冲击特征，是清选损失检测系统的核心挑战之一。
+
+本文将对比三种主流滤波算法在农机振动环境下的表现：
+
+- **LMS 自适应滤波**：实时性强，适合在线处理
+- **卡尔曼滤波**：状态估计精确，适合已知系统模型
+- **小波阈值去噪**：多分辨率分析，适合非平稳信号
+
+## 采样频率的影响
+
+采样频率是信号采集系统的首要参数。过低的采样率会导致高频冲击信号的混叠，而过高的采样率则会增加数据处理的负担。
+
+<ParameterSlider 
+  defaultValue={2000} 
+  min={500} 
+  max={5000} 
+  step={100}
+  label="采样频率"
+  unit="Hz"
+  description="调节采样频率，观察对信号重建质量的影响。在实际收获机测试中，我们使用 2000 Hz 的采样率。"
+/>
+
+在实际田间试验中，籽粒冲击信号的频带主要集中在 **500~1500 Hz**。根据奈奎斯特采样定理，采样频率至少应为信号最高频率的 2 倍，因此 **2000 Hz** 是一个合理的折中选择。
+
+<Callout type="tip" title="实验参数">
+  台架试验使用 10 粒/s、15 粒/s 和 20 粒/s 三种籽粒流量，对应实际收获机 70~85 粒/s 的 12%~29%。
+</Callout>
+
+## LMS 自适应滤波
+
+LMS（Least Mean Squares）算法通过不断调整滤波器系数，使输出信号与期望信号的误差最小化。
+
+<CodeBlock 
+  code={`function lmsFilter(input, desired, mu, filterLength) {
+  let weights = new Array(filterLength).fill(0);
+  let output = [];
+
+  for (let n = filterLength; n < input.length; n++) {
+    const x = input.slice(n - filterLength, n);
+    const y = x.reduce((sum, val, i) => sum + val * weights[i], 0);
+    const error = desired[n] - y;
+
+    // 权重更新
+    for (let i = 0; i < filterLength; i++) {
+      weights[i] += 2 * mu * error * x[i];
+    }
+
+    output.push(y);
+  }
+
+  return output;
+}`}
+  language="javascript"
+  filename="lms-filter.js"
+/>
+
+### 参数选择
+
+步长参数 `mu` 是 LMS 算法的关键：
+
+| 步长 μ | 收敛速度 | 稳态误差 | 适用场景 |
+|--------|----------|----------|----------|
+| 0.001  | 慢       | 低       | 噪声平稳 |
+| 0.01   | 中等     | 中等     | 一般场景 |
+| 0.1    | 快       | 高       | 快速跟踪 |
+
+<Callout type="warning" title="注意">
+  步长过大可能导致算法发散。在农机振动环境中，建议采用归一化 LMS（NLMS）以提高稳定性。
+</Callout>
+
+## 卡尔曼滤波
+
+卡尔曼滤波适用于已知系统状态空间模型的场景。对于压电传感器信号，我们可以建立如下状态方程：
+
+```
+x_k = F * x_{k-1} + w_k
+z_k = H * x_k + v_k
+```
+
+其中 `w_k` 和 `v_k` 分别为过程噪声和观测噪声。
+
+## 小波阈值去噪
+
+小波变换通过多分辨率分析，将信号分解到不同频带上，然后对各层小波系数进行阈值处理。
+
+<Callout type="info" title="CWT 与 DWT 的选择">
+  连续小波变换（CWT）适合精细时频分析，但计算量大；离散小波变换（DWT）计算高效，适合实时处理。我们的机载系统采用 DWT 进行在线去噪。
+</Callout>
+
+## 结论
+
+三种算法各有优劣：
+
+1. **LMS**：实现简单，实时性好，但需要参考信号
+2. **卡尔曼滤波**：精度高，但需要准确的系统模型
+3. **小波去噪**：适合非平稳信号，但计算复杂度较高
+
+在实际应用中，我们采用 **LMS + 小波阈值** 的级联方案，兼顾实时性和去噪效果。

@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-inter: 'Inter', system-ui, sans-serif;
+  --font-jetbrains: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: var(--font-inter);
+    background-color: #fafaf9;
+    color: #1c1917;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .dark body {
+    background-color: #0c0a09;
+    color: #e7e5e4;
+  }
+
+  /* 自定义滚动条 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #a8a29e;
+    border-radius: 4px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #57534e;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #78716c;
+  }
+
+  /* 选中文本颜色 */
+  ::selection {
+    background-color: #16a34a;
+    color: white;
+  }
+
+  .dark ::selection {
+    background-color: #22c55e;
+    color: #0c0a09;
+  }
+}
+
+@layer components {
+  /* Josh 风格的链接下划线动画 */
+  .link-underline {
+    position: relative;
+    text-decoration: none;
+  }
+
+  .link-underline::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background-color: currentColor;
+    transform: scaleX(0);
+    transform-origin: bottom right;
+    transition: transform 0.3s ease;
+  }
+
+  .link-underline:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+  }
+
+  /* 代码块容器 */
+  .code-block-wrapper {
+    position: relative;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+
+  .code-block-wrapper pre {
+    margin: 0 !important;
+    padding: 1.5rem !important;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  /* 文章排版优化 */
+  .article-content {
+    font-size: 1.125rem;
+    line-height: 1.8;
+    letter-spacing: -0.01em;
+  }
+
+  .article-content p {
+    margin-bottom: 1.5rem;
+  }
+
+  .article-content h2 {
+    font-size: 1.875rem;
+    margin-top: 3rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e7e5e4;
+  }
+
+  .dark .article-content h2 {
+    border-bottom-color: #292524;
+  }
+
+  .article-content h3 {
+    font-size: 1.5rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .article-content ul,
+  .article-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .article-content li {
+    margin-bottom: 0.5rem;
+  }
+
+  .article-content img {
+    border-radius: 0.75rem;
+    margin: 2rem 0;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+
+  /* 目录锚点样式 */
+  .anchor-link {
+    opacity: 0;
+    margin-left: 0.5rem;
+    text-decoration: none;
+    color: #a8a29e;
+    transition: opacity 0.2s;
+  }
+
+  h2:hover .anchor-link,
+  h3:hover .anchor-link {
+    opacity: 1;
+  }
+}
